@@ -1,32 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Viagem Ideal</title>
-	<!-- Tailwind -->
-	<link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
-	<!-- Alpine -->
-	<script type="module" src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
-	<script nomodule src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine-ie11.min.js" defer></script>
-	<!-- AOS -->
-	<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-	<!-- Custom style -->
-	<link rel="stylesheet" href="css/app.css" />
-	<!-- Poppins font -->
-	<link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"> 
-	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" />
-</head>
-<body class="antialiased">
+	{% from '_mycomponents.html' import navBarComponent, footerComponent, tableComponent, headComponent %}
 
-	{% from '_mycomponents.html' import navBarComponent, footerComponent, tableComponent %}
+	{{headComponent()}}
 
-	{{navBarComponent('text')}}
+	<body class="antialiased">
 
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-    <script>
-    	AOS.init();
-    </script>
-</body>
+		<script src="http://maps.google.com/maps/api/js?sensor=false&key=AIzaSyAP8aUZqc6RP7Tb6ahl1VXr4jv_OIp2zuc"></script>
+		
+		<script type="text/javascript">
+		function CalculaDistancia() {
+			$('#litResultado').html('Aguarde...');
+			// Instancia o DistanceMatrixService.
+			var service = new google.maps.DistanceMatrixService();
+			// Executa o DistanceMatrixService.
+			service.getDistanceMatrix({
+				origins: [$("#txtOrigem").val()], // Origem
+				destinations: [$("#txtDestino").val()], // Destino
+				travelMode: google.maps.TravelMode.DRIVING, // Modo (DRIVING | WALKING | BICYCLING)
+				unitSystem: google.maps.UnitSystem.METRIC // Sistema de medida (METRIC | IMPERIAL)
+			}, callback); // Vai chamar o callback
+		  }
+	
+		  // Tratar o retorno do DistanceMatrixService
+		  function callback(response, status) {
+			// Verificar o status.
+			if (status != google.maps.DistanceMatrixStatus.OK) { // Se o status não for "OK".
+				$("#litResultado").html(status);
+			} else { // Se o status for "OK".
+				$("#litResultado").html("&nbsp;"); // Remove o "aguarde".
+	
+				// Popula os campos.
+				$("#txtOrigemResultado").val(response.originAddresses);
+				$("#txtDestinoResultado").val(response.destinationAddresses);
+				$("#txtDistancia").val(response.rows[0].elements[0].distance.text);
+				var tempo = response.rows[0].elements[0].duration.text;
+				tempo = tempo.replace("day", "dia").replace("hour", "hora").replace("min", "minuto");
+				$("#txtTempo").val(tempo);
+	
+				//Atualizar o mapa.
+				$("#map").attr("src", "https://maps.google.com/maps?saddr=" + response.originAddresses + "&daddr=" + response.destinationAddresses + "&output=embed&key=API_KEY_AQUI");
+			}
+		  }
+		</script>
+
+		{{navBarComponent('text')}}
+
+		<!-- component -->
+			<div class="font-manrope flex mt-6 w-full items-center justify-center">
+				<div class="mx-auto box-border w-[365px] border bg-white p-4">
+			
+					<div class="">
+						<div class="font-semibold text-lg mb-6">Informe os dados necessários para a viagem</div>
+						<form method="post" action="/index">
+							<div>
+								<label for="origin" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Digite o lugar de partida</label>
+								<select id="origin" name="origin" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+									{% for value in uf_list %}
+										<option value="{{value}}" 
+										{% if (value == target) %} selected="selected" 
+										{%endif %}>
+										{{value}}
+										</option>
+									{% endfor %}
+								</select>
+							</div>
+
+							<div>
+								<label for="destine" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Digite o lugar de partida</label>
+								<select id="destine" name="destine" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+									{% for value in uf_list %}
+										<option value="{{value}}" 
+										{% if (value == target) %} selected="selected" 
+										{%endif %}>
+										{{value}}
+										</option>
+									{% endfor %}
+								</select>
+							</div>
+							
+						<button type="submit"> Enviar</button>
+						<form/>
+
+						<div class="mt-6">
+							<div class="font-semibold text-lg"> Custos </div>
+
+							<div class="">
+								<form method="post" action="/currency">
+									<div>
+										<label for="fuel" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Consumo</label>
+										<input type="text" name="fuel" id="fuel" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Insira o consumo" required>
+									</div>
+									<div>
+										<label for="distance" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Distancia</label>
+										<input type="text" name="distance" id="distance" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Insira a distância" required>
+									</div>
+								</form>
+								<div> 
+									Quantidade da gasolina /L:
+								</div>
+								<div class="mt-6">
+									Custo final do combustível:
+								</div>
+							</div>
+							
+						</div>
+					</div>
+				</div>
+			</div>
+
+
+		<script
+		src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&callback=initMap&v=weekly"
+		defer
+		></script>
+		
+	</body>
 </html>
